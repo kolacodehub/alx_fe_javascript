@@ -6,6 +6,26 @@
     <title>Dynamic Quote Generator</title>
   </head>
   <body>
+    <div
+      id="syncNotification"
+      style="
+        display: none;
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #f5c6cb;
+        border-radius: 5px;
+      "
+    >
+      <strong>Server Sync:</strong> <span id="syncMessage"></span>
+      <button
+        onclick="document.getElementById('syncNotification').style.display='none'"
+        style="margin-left: 10px"
+      >
+        Dismiss
+      </button>
+    </div>
     <h1>Dynamic Quote Generator</h1>
 
     <div style="margin-bottom: 20px">

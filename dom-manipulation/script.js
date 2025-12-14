@@ -205,3 +205,104 @@ document.getElementById("newQuote").addEventListener("click", showRandomQuote);
 
 // 5. Initial Display (This will respect the restored filter from step 3)
 filterQuotes();
+
+// --- SERVER SYNC & CONFLICT RESOLUTION ---
+
+const SERVER_URL = "https://jsonplaceholder.typicode.com/posts"; // Mock API
+
+// 1. Simulate Fetching Data from Server
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch(SERVER_URL);
+    const data = await response.json();
+
+    // JSONPlaceholder returns "posts", so we map them to "quotes" format
+    // We simulate that the server only has the first 5 items
+    return data.slice(0, 5).map((item) => ({
+      text: item.title, // Map 'title' to 'text'
+      category: "Server", // Assign a default category
+    }));
+  } catch (error) {
+    console.error("Error fetching from server:", error);
+    return [];
+  }
+}
+
+// 2. The Main Sync Function
+async function syncQuotes() {
+  const serverQuotes = await fetchQuotesFromServer();
+  let changesMade = false;
+  let conflictResolved = false;
+
+  // Iterate through server data
+  serverQuotes.forEach((serverQuote) => {
+    // Check if this quote already exists locally (by checking text match)
+    const existingQuoteIndex = quotes.findIndex(
+      (q) => q.text === serverQuote.text
+    );
+
+    if (existingQuoteIndex === -1) {
+      // CASE A: New Quote from Server -> Add it
+      quotes.push(serverQuote);
+      changesMade = true;
+    } else {
+      // CASE B: Conflict (Quote exists) -> Server Precedence
+      // We compare details. If local is different, we overwrite with server data.
+      if (quotes[existingQuoteIndex].category !== serverQuote.category) {
+        quotes[existingQuoteIndex] = serverQuote; // Overwrite local
+        changesMade = true;
+        conflictResolved = true;
+      }
+    }
+  });
+
+  if (changesMade) {
+    // Update UI and Storage
+    saveQuotes();
+    populateCategories(); // Update filter dropdown if new categories arrived
+    filterQuotes(); // Refresh the display
+
+    // Notify User
+    const message = conflictResolved
+      ? "Conflicts resolved: Server data took precedence."
+      : "New quotes synced from server.";
+    showNotification(message);
+  } else {
+    console.log("Sync complete: No changes needed.");
+  }
+}
+
+// 3. Helper to Show Notification
+function showNotification(message) {
+  const notification = document.getElementById("syncNotification");
+  const msgSpan = document.getElementById("syncMessage");
+
+  msgSpan.textContent = message;
+  notification.style.display = "block";
+
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    notification.style.display = "none";
+  }, 5000);
+}
+
+// 4. Start Periodic Sync (Every 10 seconds)
+setInterval(syncQuotes, 10000);
+
+// 5. Optional: Post Data to Server (Mock)
+// Call this inside your addQuote() function if you want to simulate sending data
+async function postQuoteToServer(quote) {
+  try {
+    const response = await fetch(SERVER_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(quote),
+    });
+    const result = await response.json();
+    console.log("Quote saved to server (mock):", result);
+  } catch (error) {
+    console.error("Error posting to server:", error);
+  }
+}
