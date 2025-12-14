@@ -229,7 +229,6 @@ async function fetchQuotesFromServer() {
 }
 
 // 2. The Main Sync Function
-// 2. The Main Sync Function
 async function syncQuotes() {
   const serverQuotes = await fetchQuotesFromServer();
   let changesMade = false;
